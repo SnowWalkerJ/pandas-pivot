@@ -4,10 +4,13 @@ import htmlPy
 import numpy as np
 import pandas as pd
 
+
+__app = None
+
 class NonExitApp(htmlPy.AppGUI):
     def start(self):
         self.window.show()
-        self.app.exec_()
+        self.execute()
 
 
 class Backend(htmlPy.Object):
@@ -38,7 +41,7 @@ class Backend(htmlPy.Object):
             columns = columns.split('|')[1:]
             index = index.split('|')[1:]
             values = values.split('|')[1:]
-            assert method in ('count', 'distinct', 'sum', 'mean', 'std', 'var'), method
+            assert method in ('count', 'distinct', 'sum', 'mean', 'max', 'min', 'std', 'var'), method
             if method == 'count':
                 method = len
             elif method == 'distinct':
@@ -55,6 +58,22 @@ class Backend(htmlPy.Object):
             self.app.evaluate_javascript(cmd)
 
 
+def get_app(data):
+    global __app
+    if __app is None:
+        app = NonExitApp(developer_mode=True, maximized=True, allow_overwrite=True)
+        backend = Backend(app, data)
+        app.bind(backend)
+        app.static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "statics")
+        app.template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+        app.template = ("index.html", {})
+    else:
+        app, backend = __app
+        backend.data = data
+    __app = (app, backend)
+    return app
+
+
 def pivot_table(data, categories=None):
     """
     Show the table in a new window.
@@ -68,22 +87,20 @@ def pivot_table(data, categories=None):
         Only categorical columns can be made as columns and
         index in pivot.
     """
-    app = NonExitApp(developer_mode=True, maximized=True)
+    
     data = data.copy()
     if categories:
         data[categories] = data[categories].apply(pd.Categorical)
-    backend = Backend(app, data)
-    app.bind(backend)
-    app.static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "statics")
-    app.template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-    app.template = ("index.html", {})
+    app = get_app(data)
     app.start()
-    
+
 
 if __name__ == '__main__':
+    from pdpivot import *
     data = pd.DataFrame({
-        'method': ['rnn', 'cnn', 'lstm'] * 3,
-        'loss': np.random.randn(9),
-        'data': ['data1'] * 3 + ['data2'] * 3 + ['data3'] * 3
+        'method': ['method1', 'method2', 'method3'] * 9,
+        'loss': np.random.randn(27),
+        'data': (['data1'] * 3 + ['data2'] * 3 + ['data3'] * 3) * 3,
+        'user': np.random.binomial(1, 0.5, 27)
     })
-    pivot_table(data, categories=['method', 'data'])
+    pivot_table(data, categories=['method', 'data', 'user'])
