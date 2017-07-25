@@ -29,3 +29,7 @@ tbody th{
 thead th{
     background-color: lightskyblue;
 }
+
+table{
+    text-align: center;
+}

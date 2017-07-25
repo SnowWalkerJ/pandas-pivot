@@ -11,20 +11,20 @@ function init_fields(data){
         
     }
 }
+
+function get_fields(selector){
+    var data = '';
+    var lis = $(selector + ' li');
+    lis.each(function(i){
+        data += '|' + lis.eq(i).text();
+    });
+    return data
+}
+
 function refresh_table(){
-    var columns = '', values = '', index = '';
-    var lis = $('#columns li');
-    lis.each(function(i){
-        columns += '|' + lis.eq(i).text();
-    });
-    var lis = $('#index li');
-    lis.each(function(i){
-        index += '|' + lis.eq(i).text();
-    });
-    var lis = $('#values li');
-    lis.each(function(i){
-        values += '|' + lis.eq(i).text();
-    });
+    var columns = get_fields('#columns'),
+        values  = get_fields('#values'),
+        index   = get_fields('#index');
     var method = $("#aggfunc>option:selected").val();
     Backend.refresh_table(columns, index, values, method);
 }

@@ -70,6 +70,7 @@ def get_app(data):
     else:
         app, backend = __app
         backend.data = data
+        app.evaluate_javascript("refresh_table()")
     __app = (app, backend)
     return app
 
@@ -87,7 +88,6 @@ def pivot_table(data, categories=None):
         Only categorical columns can be made as columns and
         index in pivot.
     """
-    
     data = data.copy()
     if categories:
         data[categories] = data[categories].apply(pd.Categorical)
