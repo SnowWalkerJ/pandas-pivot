@@ -2,12 +2,7 @@
     background-color:darkgray;
     min-height: 30px;
     margin-top: 5px;
-}
-.fields>li.numeric {
-    background-color: lightblue;
-}
-.fields>li.category {
-    background-color: lightgreen;
+    border-radius: 1%;
 }
 ul.fields.nav-stacked {
     margin-top: 10px;
@@ -15,6 +10,16 @@ ul.fields.nav-stacked {
 ul.fields.nav:not(.nav-stacked) > li{
     padding: 10px;
     margin: 5px;
+}
+
+.fields > li {
+    border-radius: 10%;
+}
+.fields>li.numeric {
+    background-color: lightblue;
+}
+.fields>li.category {
+    background-color: lightgreen;
 }
 ul.fields.nav.nav-stacked > li{
     padding: 10px;

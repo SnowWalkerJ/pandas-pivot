@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import htmlPy
 import numpy as np
@@ -35,21 +36,46 @@ class Backend(htmlPy.Object):
                 
             cmd = 'init_fields(%s)' % json.dumps(data)
             self.app.evaluate_javascript(cmd)
+            self.app.evaluate_javascript("$('.selectpicker').selectpicker('render')")
 
-        @htmlPy.Slot(str, str, str, str)
-        def refresh_table(self, columns, index, values, method):
+        @staticmethod
+        def group(data):
+            from collections import defaultdict
+            grouped = defaultdict(list)
+            for item in data:
+                key, value = item.split(':')
+                if value.isdigit():
+                    value = int(value)
+                else:
+                    match = re.match(r"\d*\.?\d", value)
+                    if match is not None and match.span() == (0, len(value)):
+                        value = float(value)
+                grouped[key].append(value)
+            return grouped
+
+
+        @htmlPy.Slot(str, str, str, str, str)
+        def refresh_table(self, columns, index, values, method, filters):
             columns = columns.split('|')[1:]
             index = index.split('|')[1:]
             values = values.split('|')[1:]
+            filters = self.group(filters.split('|')[1:])
+            condition = []
+            for key, vals in filters.items():
+                subcondition = "(%s)" % " | ".join("({key}=={value})".format(key=key, value=repr(value)) for value in vals)
+                condition.append(subcondition)
+            condition = " & ".join(condition)
+            data = self.data.query(condition) if condition.strip() else self.data
             assert method in ('count', 'distinct', 'sum', 'mean', 'max', 'min', 'std', 'var'), method
             if method == 'count':
                 method = len
             elif method == 'distinct':
                 method = lambda x: len(pd.unique(x))
             if not (columns and index and values):
-                table = self.data
+                table = data
             else:
-                table = pd.pivot_table(self.data, values=values, columns=columns, index=index, margins=True, margins_name='Total', aggfunc=method)
+                kwargs = dict(values=values, columns=columns, index=index, margins=True, margins_name='Total', aggfunc=method)
+                table = pd.pivot_table(data, **kwargs)
             self.show_table(table)
 
         def show_table(self, table):
@@ -96,7 +122,6 @@ def pivot_table(data, categories=None):
 
 
 if __name__ == '__main__':
-    from pdpivot import *
     data = pd.DataFrame({
         'method': ['method1', 'method2', 'method3'] * 9,
         'loss': np.random.randn(27),
