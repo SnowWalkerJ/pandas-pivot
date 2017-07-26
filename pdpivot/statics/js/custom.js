@@ -66,7 +66,9 @@ $(function(){
         }
     });
     $("#aggfunc").change(refresh_table);
-    $(".selectpicker").on("changed.bs.select", refresh_table);    // TODO
+    $('[id^="filter"]').each(function(i){
+        $('[id^="filter"]')[i].addEventListener('changed.bs.select', refresh_table);
+    });
 });
 $(function(){
     Backend.get_fields();
